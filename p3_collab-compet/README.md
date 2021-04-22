@@ -25,56 +25,30 @@ The goal is achieved, when the average (over 100 episodes) of those **scores** i
 
 ### Getting Started
 1. Setting up:
-	For executing the codes in this project you will need a Python3.5+ interpreter and other 	dependencies installed, according to   your OS:
+	A Python3.5+ interpreter and other dependencies will have to be installed:
 	1.1. Install Anaconda©: https://conda.io/docs/user-guide/install/index.html#
-	1.2. Initiate a conda environment with Python 3.5+	
-	1.3. Install the following packages and their dependencies:
+	1.2. Start a conda environment using Python 3.5+	
+	1.3. Install the following packages together with their dependencies:
 		- numpy: https://scipy.org/install.html
 		- matplotlib: https://matplotlib.org/users/installing.html
 		- PyTorch: https://pytorch.org/get-started/locally/
 		- Unity ML: https://github.com/Unity-Technologies/ml-agents/blob/master/docs/Installation.md
 
-    Alternatively please follow the instructions in the [DRLND GitHub repository](https://github.com/udacity/deep-reinforcement-learning#dependencies) to set up your Python environment. These instructions can be found in README.md at the root of the repository. By following these instructions, you will install PyTorch, the ML-Agents toolkit, and a few more Python packages required to complete the project.
-
-    (For Windows users) The ML-Agents toolkit supports Windows 10. While it might be possible to run the ML-Agents toolkit using other versions of Windows, it has not been tested on other versions. Furthermore, the ML-Agents toolkit has not been tested on a Windows VM such as Bootcamp or Parallels. 
-
-
-2. Download the environment from one of the links below.  You need only select the environment that matches your operating system:
+ 
+2. Download the environment, based on your os, from the following links.
     - Linux: [click here](https://s3-us-west-1.amazonaws.com/udacity-drlnd/P3/Tennis/Tennis_Linux.zip)
     - Mac OSX: [click here](https://s3-us-west-1.amazonaws.com/udacity-drlnd/P3/Tennis/Tennis.app.zip)
     - Windows (32-bit): [click here](https://s3-us-west-1.amazonaws.com/udacity-drlnd/P3/Tennis/Tennis_Windows_x86.zip)
     - Windows (64-bit): [click here](https://s3-us-west-1.amazonaws.com/udacity-drlnd/P3/Tennis/Tennis_Windows_x86_64.zip)
     
-    (_For Windows users_) Check out [this link](https://support.microsoft.com/en-us/help/827218/how-to-determine-whether-a-computer-is-running-a-32-bit-version-or-64) if you need help with determining if your computer is running a 32-bit version or 64-bit version of the Windows operating system.
-
-    (_For AWS_) If you'd like to train the agent on AWS (and have not [enabled a virtual screen](https://github.com/Unity-Technologies/ml-agents/blob/master/docs/Training-on-Amazon-Web-Service.md)), then please use [this link](https://s3-us-west-1.amazonaws.com/udacity-drlnd/P3/Tennis/Tennis_Linux_NoVis.zip) to obtain the "headless" version of the environment.  You will **not** be able to watch the agent without enabling a virtual screen, but you will be able to train the agent.  (_To watch the agent, you should follow the instructions to [enable a virtual screen](https://github.com/Unity-Technologies/ml-agents/blob/master/docs/Training-on-Amazon-Web-Service.md), and then download the environment for the **Linux** operating system above._)
-
-3. Place the environment zip file and the files in this project folder ino the DRLND GitHub repository, in the `p3_collab-compet/` folder, and unzip (or decompress) the files. 
+3. Place the project files into the DRLND GitHub repository, placed in the `p3_collab-compet/` folder, and unzip (or decompress) the files. 
 
 
 ### Instructions
 
-Follow the instructions in `Tennis_Project.ipynb` to get started with training your own agent!
-To run the cells you can simply click on the first one and press `Shift + Enter`. This can be made through the whole Notebook.
+Please follow the instructions in the Jupyter notebook named`Tennis_Project.ipynb` to get started with training your own agent!
+Press `Ctrl + Enter` to execute code inside each of the cells. 
+
 
   
 
-### (Optional) Challenge: Soccer Environment
-
-After you have successfully completed the project, you might like to solve the more difficult **Soccer** environment.
-
-![Soccer][image2]
-
-In this environment, the goal is to train a team of agents to play soccer.  
-
-You can read more about this environment in the ML-Agents GitHub [here](https://github.com/Unity-Technologies/ml-agents/blob/master/docs/Learning-Environment-Examples.md#soccer-twos).  To solve this harder task, you'll need to download a new Unity environment.  (**Note**: Udacity students should not submit a project with this new environment.)
-
-You need only select the environment that matches your operating system:
-- Linux: [click here](https://s3-us-west-1.amazonaws.com/udacity-drlnd/P3/Soccer/Soccer_Linux.zip)
-- Mac OSX: [click here](https://s3-us-west-1.amazonaws.com/udacity-drlnd/P3/Soccer/Soccer.app.zip)
-- Windows (32-bit): [click here](https://s3-us-west-1.amazonaws.com/udacity-drlnd/P3/Soccer/Soccer_Windows_x86.zip)
-- Windows (64-bit): [click here](https://s3-us-west-1.amazonaws.com/udacity-drlnd/P3/Soccer/Soccer_Windows_x86_64.zip)
-
-Then, place the file in the `p3_collab-compet/` folder in the DRLND GitHub repository, and unzip (or decompress) the file.  Next, open `Soccer.ipynb` and follow the instructions to learn how to use the Python API to control the agent.
-
-(_For AWS_) If you'd like to train the agents on AWS (and have not [enabled a virtual screen](https://github.com/Unity-Technologies/ml-agents/blob/master/docs/Training-on-Amazon-Web-Service.md)), then please use [this link](https://s3-us-west-1.amazonaws.com/udacity-drlnd/P3/Soccer/Soccer_Linux_NoVis.zip) to obtain the "headless" version of the environment.  You will **not** be able to watch the agents without enabling a virtual screen, but you will be able to train the agents.  (_To watch the agents, you should follow the instructions to [enable a virtual screen](https://github.com/Unity-Technologies/ml-agents/blob/master/docs/Training-on-Amazon-Web-Service.md), and then download the environment for the **Linux** operating system above._)

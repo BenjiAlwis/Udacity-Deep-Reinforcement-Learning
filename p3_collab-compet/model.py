@@ -1,117 +1,147 @@
 import numpy as np
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from mdata  import *
 
 
-def hidden_init(layer):
-    fan_in = layer.weight.data.size()[0]
-    lim = 1. / np.sqrt(fan_in)
-    return (-lim, lim)
 
 class Actor(nn.Module):
-    """Actor (Policy) Model."""
+ """Actor Neural Network."""
 
-    def __init__(self, input_dim, output_dim, seed=10, fc1_units=ACTOR_FC1_UNITS, fc2_units=ACTOR_FC2_UNITS):
-        """Initialize parameters and build model.
-        Params
-        ======
-            input_dim (int): Input dimension (Dimension of each state)
-            output_dim (int): Output dimension (Dimension of each action)
-            seed (int): Random seed
-            fc1_units (int): Number of nodes in first hidden layer
-            fc2_units (int): Number of nodes in second hidden layer
-        """
-        super(Actor, self).__init__()
-        self.seed = torch.manual_seed(seed)
-        self.nonlin = NON_LIN
-        
-        # Dense layers
-        self.fc1 = nn.Linear(input_dim, fc1_units)
-        self.fc2 = nn.Linear(fc1_units, fc2_units)
-        self.fc3 = nn.Linear(fc2_units, output_dim)
-        
-        # Normalization layers
-        self.bn1 = nn.BatchNorm1d(fc1_units)
-        
-        
-        self.reset_parameters()
-        
-
-    def reset_parameters(self):
-        self.fc1.weight.data.uniform_(*hidden_init(self.fc1))
-        self.fc2.weight.data.uniform_(*hidden_init(self.fc2))
-        self.fc3.weight.data.uniform_(-3e-3, 3e-3)
+ def __init__(self, state_dim, action_dim,seed=10, hw=[400,300,300], leak=0.1,bn_mode=0):
+  """Initialisation function.
+  Params
+  ======
+  state_dim (int): size of the state vector
+  action_dim (int): size of the action vector
+  seed: random seed 
+  hw: widths of the hidden layers
+  leak: relu leak
+  bn_mode: batch normalisation method
+    
+  """
+  super(Actor, self).__init__()
+  self.seed = torch.manual_seed(seed)
+  self.leak = leak
+  self.bn_mode = bn_mode
+  self.ip_layer = nn.Linear(state_dim, hw[0])
+  self.num_hidden_layers = len(hw)
+  self.hls = nn.ModuleList()
+  for layer_num in range(self.num_hidden_layers-1):
+   self.hls.append(nn.Linear(hw[layer_num],hw[layer_num+1]))
+  self.op_layer = nn.Linear(hw[-1], action_dim)
+  self.bn = nn.BatchNorm1d(state_dim)
+  self.bn1 = nn.BatchNorm1d(hw[0])
+  self.reset_parameters()
         
 
-    def forward(self, state):
-        """Build an actor (policy) network that maps states -> actions."""
-        
-        # Reshape the state to comply with Batch Normalization
-        if state.dim() == 1:
-            state = torch.unsqueeze(state,0)
-            
-        h1 = self.nonlin(self.fc1(state))
-        h1 = self.bn1(h1) # Batch Normalization after Activation  
-        h2 = self.nonlin(self.fc2(h1))
-        return F.tanh(self.fc3(h2))    
+ def reset_parameters(self):
+  """ reset the weights using Kaiming normalisation"""
+  torch.nn.init.kaiming_normal_(self.ip_layer.weight.data, a=self.leak, mode='fan_in')
+  for hl in self.hls:
+   torch.nn.init.kaiming_normal_(hl.weight.data, a=self.leak, mode='fan_in')
+  torch.nn.init.uniform_(self.op_layer.weight.data, -3e-3, 3e-3)
 
 
+ def forward(self, state):
+  """States to action mapping by the policy network"""
+  
+  if state.dim() == 1:
+   state = torch.unsqueeze(state,0)
+  if self.bn_mode==0:
+   state = self.bn(state)
+  state = torch.squeeze(state,0)
+  x = F.leaky_relu(self.ip_layer(state), negative_slope=self.leak)
+  if self.bn_mode==1:
+   x = self.bn1(x)
+  for hl in self.hls:
+   x = F.leaky_relu(hl(x), negative_slope=self.leak)
+  return F.tanh(self.op_layer(x))
+
+ def save(self,it,num):
+  if it==0:
+   filename = 'results/checkpoint_actor_local_' + str(num) + '.pth'
+  else:
+   filename = 'results/checkpoint_actor_target_' + str(num) + '.pth'            
+  torch.save(self.state_dict(), filename)
 
 class Critic(nn.Module):
-    """Critic (Value) Model."""
+ """Critic Neural Network"""
 
-    def __init__(self, input_dim, action_size, seed=10, fcs1_units=CRITIC_FCS1_UNITS, fc2_units=CRITIC_FC2_UNITS):
-        """Initialize parameters and build model.
-        Params
-        ======
-            input_dim (int): Input dimension (Dimension of each state)
-            action_size : Dimension of each action
-            seed (int): Random seed
-            fcs1_units (int): Number of nodes in the first hidden layer
-            fc2_units (int): Number of nodes in the second hidden layer
-        """
-        super(Critic, self).__init__()
-        self.seed = torch.manual_seed(seed)
-        self.nonlin = NON_LIN
-        
-        # Dense layers 
-        
-        
-        self.fcs1 = nn.Linear(input_dim+action_size, fcs1_units)
-        self.fc2 = nn.Linear(fcs1_units, fc2_units)
-        
-        self.fc3 = nn.Linear(fc2_units, 1)
-        
-        # Normalization layers
-        self.bn1 = nn.BatchNorm1d(fcs1_units)
-        
-        
-        self.reset_parameters()
+ def __init__(self,action_dim, seed=10,lw=[400,300,300],approach=0,leak=0.1,bn_mode=0):
+  """Initialisation function
+  Params
+  ======
+  action_dim : Dimension of each action
+  seed (int): Random seed
+  lw (int): size of the neural net layers, starting from the input layer
+  approach (int): 0- state+actions at the input layer 1 - at the first hidden layer 
+  leak: relu leak
+  bn_mode: batch normalisation method
+  
+  """
+  super(Critic, self).__init__()
+  self.seed = torch.manual_seed(seed)
+  self.approach = approach
+  self.leak = leak
+  self.bn = nn.BatchNorm1d(lw[0])
+  self.bn1 = nn.BatchNorm1d(lw[1])
+  self.num_layers = len(lw)
+  self.nls = nn.ModuleList()
+
+  if self.approach==0:
+   self.nls.append(nn.Linear(lw[0]+action_dim, lw[1]))
+   for layer_num in range(1,self.num_layers-1):
+    self.nls.append(nn.Linear(lw[layer_num],lw[layer_num+1]))
+  else:
+   self.nls.append(nn.Linear(lw[0], lw[1]))
+   self.nls.append(nn.Linear(lw[1]+action_dim, lw[2]))
+   for layer_num in range(2,self.num_layers-1):
+    self.nls.append(nn.Linear(lw[layer_num],lw[layer_num+1]))
+
+  self.op_layer = nn.Linear(lw[-1], 1)
+  self.reset_parameters()
         
 
-    def reset_parameters(self):
-        self.fcs1.weight.data.uniform_(*hidden_init(self.fcs1))
-        self.fc2.weight.data.uniform_(*hidden_init(self.fc2))
-        self.fc3.weight.data.uniform_(-3e-3, 3e-3)
-        
+ def reset_parameters(self):
+  """ reset the weights using Kaiming normalisation"""
+  for nl in self.nls:
+   torch.nn.init.kaiming_normal_(nl.weight.data, a=self.leak, mode='fan_in')
+  torch.nn.init.uniform_(self.op_layer.weight.data, -3e-3, 3e-3)
 
-    def forward(self, state, action):
-        """Build a critic (value) network that maps (state, action) pairs -> Q-values."""
-          
-        # Reshape the state to comply with Batch Normalization
-        if state.dim() == 1:
-            state = torch.unsqueeze(state,0)
 
+ def forward(self, state, action):
+  """calculation of Q values for given state and action values"""
+  
+  
+  if state.dim() == 1:
+   state = torch.unsqueeze(state,0)
+  if self.approach==0:
+   x = torch.cat((state, action.float()), dim=1)
+   for nl in self.nls:
+    x = F.leaky_relu(nl(x), negative_slope=self.leak)
+   return self.op_layer(x)
+  elif bn_mode==0:
+   x = self.bn(state)
+   x = F.leaky_relu(self.nls[0](state), negative_slope=self.leak)
+   x = torch.cat((x, action.float()), dim=1)
+   for ln in range(1,len(self.nls)):
+    x = F.leaky_relu(nls[ln](x), negative_slope=self.leak)
+   return self.op_layer(x)
+  else:
+   x = F.leaky_relu(self.nls[0](state), negative_slope=self.leak)
+   x = torch.cat((x, action.float()), dim=1)
+   for ln in range(1,len(self.nls)):
+    x = F.leaky_relu(nls[ln](x), negative_slope=self.leak)
+   return self.op_layer(x)
         
-        xs = torch.cat((state, action.float()), dim=1)
-        x = self.nonlin(self.fcs1(xs))
-        x = self.bn1(x)  
-        
-        x = self.nonlin(self.fc2(x))
-        return self.fc3(x)
+ def save(self,it,num):
+  if it==0:
+   filename = 'results/checkpoint_critic_local_' + str(num) + '.pth'
+  else:
+   filename = 'results/checkpoint_critic_target_' + str(num) + '.pth'            
+  torch.save(self.state_dict(), filename)
+       
 
    
